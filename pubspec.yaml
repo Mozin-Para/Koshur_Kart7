@@ -1,0 +1,41 @@
+name: koshur_kart
+description: "Instant Delivery Service"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.9.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  provider: ^6.0.5   # ← add this
+
+  cupertino_icons: ^1.0.2
+  permission_handler: ^12.0.1
+  shared_preferences: ^2.2.2
+  url_launcher: ^6.1.7
+  image_picker: ^0.8.7+3
+  flutter_colorpicker: ^1.0.4
+  geolocator: ^10.0.2
+  geocoding: ^2.0.5
+  google_maps_flutter: ^2.2.3
+  http: ^1.1.0
+  flutter_displaymode: ^0.6.0
+  google_sign_in: ^5.4.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/logo.png       # ✅ Add your splash logo here
+    - assets/icon.png       # ✅ Add your app icon here
+    - assets/avatar_dp.png
+    - assets/coin.gif
+    - assets/logo_koshur_kart.png
+    - assets/google_logo.png
