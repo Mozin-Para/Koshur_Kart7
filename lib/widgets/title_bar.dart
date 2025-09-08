@@ -1,27 +1,23 @@
+// lib/widgets/title_bar.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
+import '../managers/profile_manager.dart';
 import '../managers/theme_manager.dart';
 import '../managers/color_manager.dart';
-import '../managers/profile_manager.dart';
 import '../pages/map_address/address_page.dart';
 import '../pages/profile/profile_page.dart';
+import '../pages/profile/login_page.dart';
 import '../pages/map_address/address_model.dart';
 
-/// A full‐height title bar showing app title, ETA, address selector,
-/// search field, and category chips.
+/// Full‐height header with gradient, title, ETA, address selector, search & chips.
 class FullTitleBar extends StatefulWidget implements PreferredSizeWidget {
-  final ThemeManager themeManager;
-  final ColorManager colorManager;
-
-  const FullTitleBar({
-    Key? key,
-    required this.themeManager,
-    required this.colorManager,
-  }) : super(key: key);
+  const FullTitleBar({Key? key}) : super(key: key);
 
   @override
-  Size get preferredSize => const Size.fromHeight(224);
+  Size get preferredSize => const Size.fromHeight(240);
 
   @override
   State<FullTitleBar> createState() => _FullTitleBarState();
@@ -32,22 +28,27 @@ class _FullTitleBarState extends State<FullTitleBar> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final accent = widget.colorManager.currentMaterialColor.shade500;
+    final pm       = context.watch<ProfileManager>();
+    final themeMgr = context.watch<ThemeManager>();
+    final colorMgr = context.watch<ColorManager>();
+    final accent   = colorMgr.currentMaterialColor.shade500;
+    final theme    = Theme.of(context);
     final bottomColor = theme.brightness == Brightness.light
         ? Colors.white
         : theme.colorScheme.surface;
 
-    // adjust status bar for contrast
+    // Status bar contrast
     final iconBrightness =
     accent.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light;
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: iconBrightness,
-      statusBarBrightness: iconBrightness,
-    ));
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: iconBrightness,
+        statusBarBrightness: iconBrightness,
+      ),
+    );
 
-    // category chips
+    // Category chips
     final chips = [
       _Chip(icon: Icons.list, label: 'All'),
       _Chip(icon: Icons.electrical_services, label: 'Electronics'),
@@ -82,7 +83,7 @@ class _FullTitleBarState extends State<FullTitleBar> {
               ),
             ),
 
-            // ETA + tappable address + avatar
+            // ETA + address + avatar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Row(
@@ -92,7 +93,6 @@ class _FullTitleBarState extends State<FullTitleBar> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // ETA badge
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
@@ -103,13 +103,12 @@ class _FullTitleBarState extends State<FullTitleBar> {
                           child: const Text(
                             '11 min',
                             style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87),
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 6),
-
-                        // Address selector
                         GestureDetector(
                           onTap: () {
                             showModalBottomSheet<void>(
@@ -118,9 +117,7 @@ class _FullTitleBarState extends State<FullTitleBar> {
                               backgroundColor: Colors.transparent,
                               builder: (_) => AddressPage(
                                 onDefaultChanged: (addr) {
-                                  setState(() {
-                                    _defaultAddress = addr;
-                                  });
+                                  setState(() => _defaultAddress = addr);
                                 },
                               ),
                             );
@@ -154,35 +151,56 @@ class _FullTitleBarState extends State<FullTitleBar> {
 
                   const SizedBox(width: 12),
 
-                  // Profile avatar
+                  // Avatar & login/logout
                   GestureDetector(
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => ProfilePage(
-                          themeManager: widget.themeManager,
-                          colorManager: widget.colorManager,
+                    onTap: () {
+                      if (pm.isLoggedIn) {
+                        Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => const ProfilePage(),
+                        ));
+                      } else {
+                        Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => const LoginPage(),
+                        ));
+                      }
+                    },
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircleAvatar(
+                          radius: 18,
+                          backgroundColor: Colors.white,
+                          backgroundImage:
+                          const AssetImage('assets/avatar_dp.png'),
                         ),
-                      ),
-                    ),
-                    child: CircleAvatar(
-                      radius: 18,
-                      backgroundColor: Colors.white,
-                      backgroundImage: ProfileManager().avatarImage,
+                        if (!pm.isLoggedIn)
+                          const Padding(
+                            padding: EdgeInsets.only(top: 4),
+                            child: Text(
+                              'Log In',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
 
-            // Search field
+            // Search bar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Container(
                 height: 48,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).brightness == Brightness.light
+                  color: theme.brightness == Brightness.light
                       ? Colors.white
-                      : Theme.of(context).colorScheme.surfaceVariant,
+                      : theme.colorScheme.surfaceVariant,
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: const TextField(
@@ -197,7 +215,7 @@ class _FullTitleBarState extends State<FullTitleBar> {
               ),
             ),
 
-            // Category chips
+            // Chips
             SizedBox(
               height: 48,
               child: ListView(
@@ -213,31 +231,25 @@ class _FullTitleBarState extends State<FullTitleBar> {
   }
 }
 
-/// A compact header that slides in when scrolling up.
+/// Compact header that slides in when scrolling up.
 class MiniTitleBar extends StatelessWidget {
-  final ThemeManager themeManager;
-  final ColorManager colorManager;
   final bool isVisible;
-
-  const MiniTitleBar({
-    Key? key,
-    required this.themeManager,
-    required this.colorManager,
-    required this.isVisible,
-  }) : super(key: key);
+  const MiniTitleBar({Key? key, required this.isVisible}) : super(key: key);
 
   static const _searchH = 48.0;
-  static const _chipsH = 48.0;
-  static const _vPad = 8.0;
+  static const _chipsH  = 48.0;
+  static const _vPad    = 8.0;
 
   @override
   Widget build(BuildContext context) {
-    final accent = colorManager.currentMaterialColor.shade500;
-    final bottomGrad = Theme.of(context).brightness == Brightness.light
+    final colorMgr  = context.watch<ColorManager>();
+    final accent    = colorMgr.currentMaterialColor.shade500;
+    final theme     = Theme.of(context);
+    final bottomGrad = theme.brightness == Brightness.light
         ? Colors.white
-        : Theme.of(context).colorScheme.surface;
-    final statusBar = MediaQuery.of(context).padding.top;
-    final height = statusBar + _vPad + _searchH + _vPad + _chipsH;
+        : theme.colorScheme.surface;
+    final statusBar  = MediaQuery.of(context).padding.top;
+    final height     = statusBar + _vPad + _searchH + _vPad + _chipsH;
 
     return AnimatedSlide(
       offset: isVisible ? Offset.zero : const Offset(0, -1),
@@ -246,61 +258,59 @@ class MiniTitleBar extends StatelessWidget {
       child: AnimatedOpacity(
         opacity: isVisible ? 1 : 0,
         duration: const Duration(milliseconds: 200),
-        child: SizedBox(
+        child: Container(
           height: height,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [accent, bottomGrad],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [accent, bottomGrad],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
             ),
-            child: Padding(
-              padding: EdgeInsets.only(top: statusBar),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Search bar
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: _vPad),
-                    child: Container(
-                      height: _searchH,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).brightness == Brightness.light
-                            ? Colors.white
-                            : Theme.of(context).colorScheme.surfaceVariant,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: const TextField(
-                        decoration: InputDecoration(
-                          hintText: 'Search products, books…',
-                          prefixIcon: Icon(Icons.search, color: Colors.grey),
-                          border: InputBorder.none,
-                          contentPadding:
-                          EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                        ),
+          ),
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                // Search
+                Padding(
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: _vPad),
+                  child: Container(
+                    height: _searchH,
+                    decoration: BoxDecoration(
+                      color: theme.brightness == Brightness.light
+                          ? Colors.white
+                          : theme.colorScheme.surfaceVariant,
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: const TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Search products, books…',
+                        prefixIcon: Icon(Icons.search, color: Colors.grey),
+                        border: InputBorder.none,
+                        contentPadding:
+                        EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                       ),
                     ),
                   ),
+                ),
 
-                  // Mini chips
-                  SizedBox(
-                    height: _chipsH,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      children: const [
-                        _Chip(icon: Icons.list, label: 'All'),
-                        _Chip(icon: Icons.brush, label: 'Beauty'),
-                        _Chip(icon: Icons.weekend, label: 'Decor'),
-                        _Chip(icon: Icons.electrical_services, label: 'Tech'),
-                      ],
-                    ),
+                // Chips row
+                SizedBox(
+                  height: _chipsH,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.only(left: 16),
+                    children: [
+                      _Chip(icon: Icons.list, label: 'All'),
+                      _Chip(icon: Icons.electrical_services, label: 'Electronics'),
+                      _Chip(icon: Icons.brush, label: 'Beauty'),
+                      _Chip(icon: Icons.weekend, label: 'Decor'),
+                      _Chip(icon: Icons.child_care, label: 'Kids'),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -309,7 +319,7 @@ class MiniTitleBar extends StatelessWidget {
   }
 }
 
-/// A small category chip widget.
+/// A single category chip used by both bars.
 class _Chip extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -318,12 +328,13 @@ class _Chip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accent = context.watch<ColorManager>().currentMaterialColor.shade500;
     return Padding(
-      padding: const EdgeInsets.only(right: 8.0),
+      padding: const EdgeInsets.only(right: 8),
       child: Chip(
-        backgroundColor: Colors.white.withOpacity(0.9),
-        avatar: Icon(icon, size: 18, color: Colors.black54),
-        label: Text(label),
+        avatar: Icon(icon, size: 16, color: Colors.white),
+        label: Text(label, style: const TextStyle(color: Colors.white)),
+        backgroundColor: accent,
       ),
     );
   }

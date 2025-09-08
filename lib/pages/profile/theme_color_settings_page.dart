@@ -1,22 +1,21 @@
 // lib/pages/profile/theme_color_settings_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:provider/provider.dart';
 
 import '../../managers/theme_manager.dart';
 import '../../managers/color_manager.dart';
 
 class ThemeColorSettingsPage extends StatelessWidget {
-  final ThemeManager themeManager;
-  final ColorManager colorManager;
-
-  const ThemeColorSettingsPage({
-    super.key,
-    required this.themeManager,
-    required this.colorManager,
-  });
+  const ThemeColorSettingsPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // Read managers from Provider
+    final themeManager = context.watch<ThemeManager>();
+    final colorManager = context.watch<ColorManager>();
+
     final MaterialColor currentSwatch = colorManager.currentMaterialColor;
     final Color accentShade = currentSwatch.shade500;
 
@@ -32,21 +31,21 @@ class ThemeColorSettingsPage extends StatelessWidget {
                 leading: Icon(Icons.brightness_6, color: accentShade),
                 title: const Text('App Theme'),
                 subtitle: const Text('Light / Dark / System'),
-                onTap: () => _showThemeMenu(tileCtx),
                 trailing: Icon(Icons.arrow_drop_down, color: accentShade),
+                onTap: () => _showThemeMenu(tileCtx, themeManager),
               );
             }),
 
             const Divider(),
 
-            // Accent Color selector with Custom…
+            // Accent Color selector
             Builder(builder: (tileCtx) {
               return ListTile(
                 leading: Icon(Icons.palette, color: accentShade),
                 title: const Text('Accent Color'),
                 subtitle: const Text('Choose your app color'),
-                onTap: () => _showAccentMenu(tileCtx),
                 trailing: Icon(Icons.arrow_drop_down, color: accentShade),
+                onTap: () => _showAccentMenu(tileCtx, colorManager),
               );
             }),
           ],
@@ -55,7 +54,8 @@ class ThemeColorSettingsPage extends StatelessWidget {
     );
   }
 
-  Future<void> _showThemeMenu(BuildContext tileCtx) async {
+  Future<void> _showThemeMenu(
+      BuildContext tileCtx, ThemeManager themeManager) async {
     final box = tileCtx.findRenderObject() as RenderBox;
     final pos = box.localToGlobal(Offset.zero);
     final rect = RelativeRect.fromLTRB(
@@ -70,23 +70,27 @@ class ThemeColorSettingsPage extends StatelessWidget {
           value: mode,
           child: Text(
             mode.toString().split('.').last.capitalize(),
-            style: TextStyle(color: Theme.of(tileCtx).colorScheme.onSurface),
+            style: TextStyle(
+              color: Theme.of(tileCtx).colorScheme.onSurface,
+            ),
           ),
         );
       }).toList(),
     );
 
-    if (selected != null) themeManager.setTheme(selected);
+    if (selected != null) {
+      themeManager.setTheme(selected);
+    }
   }
 
-  Future<void> _showAccentMenu(BuildContext tileCtx) async {
+  Future<void> _showAccentMenu(
+      BuildContext tileCtx, ColorManager colorManager) async {
     final box = tileCtx.findRenderObject() as RenderBox;
     final pos = box.localToGlobal(Offset.zero);
     final rect = RelativeRect.fromLTRB(
       pos.dx, pos.dy + box.size.height, pos.dx + box.size.width, 0,
     );
 
-    // Build preset swatch entries
     final items = <PopupMenuEntry<int>>[
       for (var i = 0; i < colorManager.colors.length; i++)
         PopupMenuItem<int>(
@@ -105,18 +109,21 @@ class ThemeColorSettingsPage extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 _label(colorManager.colors[i]),
-                style: TextStyle(color: Theme.of(tileCtx).colorScheme.onSurface),
+                style: TextStyle(
+                  color: Theme.of(tileCtx).colorScheme.onSurface,
+                ),
               ),
             ],
           ),
         ),
       const PopupMenuDivider(),
-      // Custom Color entry
       PopupMenuItem<int>(
         value: -1,
         child: Text(
           'Custom Color…',
-          style: TextStyle(color: Theme.of(tileCtx).colorScheme.onSurface),
+          style: TextStyle(
+            color: Theme.of(tileCtx).colorScheme.onSurface,
+          ),
         ),
       ),
     ];
@@ -126,16 +133,16 @@ class ThemeColorSettingsPage extends StatelessWidget {
       position: rect,
       items: items,
     );
-
     if (selected == null) return;
     if (selected >= 0) {
       colorManager.setColorByIndex(selected);
     } else {
-      await _openCustomColorPicker(tileCtx);
+      await _openCustomColorPicker(tileCtx, colorManager);
     }
   }
 
-  Future<void> _openCustomColorPicker(BuildContext ctx) async {
+  Future<void> _openCustomColorPicker(
+      BuildContext ctx, ColorManager colorManager) async {
     Color pickerColor = colorManager.currentMaterialColor.shade500;
 
     await showDialog(
@@ -171,18 +178,27 @@ class ThemeColorSettingsPage extends StatelessWidget {
 
   static String _label(MaterialColor c) {
     switch (c) {
-      case Colors.green:  return 'Green';
-      case Colors.grey:   return 'Grey';
-      case Colors.blue:   return 'Blue';
-      case Colors.red:    return 'Red';
-      case Colors.yellow: return 'Yellow';
-      case Colors.purple: return 'Purple';
-      case Colors.teal:   return 'Teal';
-      default:            return 'Custom';
+      case Colors.green:
+        return 'Green';
+      case Colors.grey:
+        return 'Grey';
+      case Colors.blue:
+        return 'Blue';
+      case Colors.red:
+        return 'Red';
+      case Colors.yellow:
+        return 'Yellow';
+      case Colors.purple:
+        return 'Purple';
+      case Colors.teal:
+        return 'Teal';
+      default:
+        return 'Custom';
     }
   }
 }
 
 extension on String {
-  String capitalize() => this[0].toUpperCase() + substring(1);
+  String capitalize() =>
+      isEmpty ? this : this[0].toUpperCase() + substring(1);
 }

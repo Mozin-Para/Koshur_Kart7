@@ -1,3 +1,4 @@
+//lib/managers/color_manager.dart
 import 'package:flutter/material.dart';
 import '../services/prefs_service.dart';
 

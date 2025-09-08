@@ -249,7 +249,8 @@ class _AddressPageState extends State<AddressPage>
           child: Material(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
             clipBehavior: Clip.antiAlias,
-            color: Colors.white,
+            // Updated to use theme's background color instead of hardcoded white
+            color: Theme.of(context).scaffoldBackgroundColor,
             child: Stack(
               children: [
                 Padding(

@@ -1,52 +1,45 @@
+// lib/pages/profile/guest_profile_page.dart
+
 import 'package:flutter/material.dart';
+import '../../managers/profile_manager.dart';
+import 'login_page.dart';  // <-- correct relative import
 
-import '../../managers/theme_manager.dart';
-import '../../managers/color_manager.dart';
-import '../../widgets/theme_mode_toggle.dart';
-import 'theme_color_settings_page.dart';
-import 'login_page.dart';
-
-/// Guest‐mode profile screen: lets you toggle dark/light, pick accent color,
-/// then tap "Log In" to enter the real login flow.
+/// Simple profile screen for guests:
+/// • Toggle dark mode via Theme.of(context)
+/// • “Log In” button navigates to your real LoginPage
 class GuestProfilePage extends StatelessWidget {
-  final ThemeManager themeManager;
-  final ColorManager colorManager;
-
-  const GuestProfilePage({
-    Key? key,
-    required this.themeManager,
-    required this.colorManager,
-  }) : super(key: key);
+  const GuestProfilePage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final pm    = ProfileManager();
+    final theme = Theme.of(context);
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Guest Profile'),
-        actions: [
-          // Dark/light toggle (same widget as in ProfilePage)
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: ThemeModeToggle(
-              themeManager: themeManager,
-              colorManager: colorManager,
-              width: 52,
-              height: 26,
+      appBar: AppBar(title: const Text('Guest Profile')),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Dark Mode switch
+            SwitchListTile(
+              title: const Text('Dark Mode'),
+              value: theme.brightness == Brightness.dark,
+              onChanged: (v) {
+                // If you have a singleton ThemeManager, call it here:
+                // ThemeManager().toggleDarkMode(v);
+              },
             ),
-          ),
-        ],
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
 
-          const Divider(),
-          const Spacer(),
+            const SizedBox(height: 24),
 
-          // Log In button at bottom
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: SizedBox(
+            const Divider(),
+
+            const Spacer(),
+
+            // Log In button at bottom
+            SizedBox(
               height: 48,
               child: ElevatedButton(
                 onPressed: () {
@@ -59,8 +52,8 @@ class GuestProfilePage extends StatelessWidget {
                 child: const Text('Log In'),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

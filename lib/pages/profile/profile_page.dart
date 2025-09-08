@@ -2,24 +2,18 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-import '../../managers/profile_manager.dart';     // ← add this
-import '../../widgets/refer_and_earn_msg.dart';
-import '../../widgets/theme_mode_toggle.dart';
+import 'package:provider/provider.dart';
+import '../../managers/profile_manager.dart';
 import '../../managers/theme_manager.dart';
 import '../../managers/color_manager.dart';
+import '../../widgets/refer_and_earn_msg.dart';
+import '../../widgets/theme_mode_toggle.dart';
 import 'profile_your_account_details.dart';
 import 'edit_profile_page.dart';
+import 'contact_page.dart';  // ← NEW
 
 class ProfilePage extends StatefulWidget {
-  final ThemeManager themeManager;
-  final ColorManager colorManager;
-
-  const ProfilePage({
-    super.key,
-    required this.themeManager,
-    required this.colorManager,
-  });
+  const ProfilePage({super.key});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -46,17 +40,20 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
     );
-    if (mounted && result != null) {
-      setState(() {
-        _name  = result.name;
-        _phone = result.phone;
-        _email = result.email;
-        _dob   = result.dob;
-      });
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Profile updated successfully')),
-      );
-    }
+    if (!mounted || result == null) return;
+
+    setState(() {
+      _name  = result.name;
+      _phone = result.phone;
+      _email = result.email;
+      _dob   = result.dob;
+    });
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text('Profile updated successfully'),
+        duration: Duration(seconds: 2),
+      ),
+    );
   }
 
   Widget _menuTile(IconData icon, String title, VoidCallback onTap) {
@@ -71,20 +68,26 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    final accent        = widget.colorManager.currentMaterialColor.shade500;
+    final pm       = context.read<ProfileManager>();
+    final themeMgr = context.watch<ThemeManager>();
+    final colorMgr = context.watch<ColorManager>();
+
+    final accent        = colorMgr.currentMaterialColor.shade500;
     final isAccentLight = accent.computeLuminance() > 0.5;
     final barIcons      = isAccentLight ? Brightness.dark : Brightness.light;
     final appBarText    = isAccentLight ? Colors.black : Colors.white;
 
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      statusBarColor: accent,
-      statusBarIconBrightness: barIcons,
-      systemNavigationBarColor: Theme.of(context).canvasColor,
-      systemNavigationBarIconBrightness:
-      Theme.of(context).brightness == Brightness.dark
-          ? Brightness.light
-          : Brightness.dark,
-    ));
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(
+        statusBarColor: accent,
+        statusBarIconBrightness: barIcons,
+        systemNavigationBarColor: Theme.of(context).canvasColor,
+        systemNavigationBarIconBrightness:
+        Theme.of(context).brightness == Brightness.dark
+            ? Brightness.light
+            : Brightness.dark,
+      ),
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -94,19 +97,13 @@ class _ProfilePageState extends State<ProfilePage> {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12),
-            child: ThemeModeToggle(
-              themeManager: widget.themeManager,
-              colorManager: widget.colorManager,
-              width: 52,
-              height: 26,
-            ),
+            child: ThemeModeToggle(width: 52, height: 26),
           ),
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // SECTION 1: Account Details
           ProfileYourAccountDetails(
             name:        _name,
             phone:       _phone,
@@ -114,14 +111,11 @@ class _ProfilePageState extends State<ProfilePage> {
             dob:         _dob,
             uniqueId:    _uniqueId,
             onTap:       _editProfile,
-            onUniqueTap: () {
-              // Reference-number dialog removed
-            },
+            onUniqueTap: () {},
           ),
-
           const SizedBox(height: 16),
 
-          // FULL-WIDTH REFERRAL CODE BANNER
+          // Referral banner…
           InkWell(
             borderRadius: BorderRadius.circular(8),
             onTap: () => showReferAndEarnMsgDialog(context),
@@ -154,7 +148,10 @@ class _ProfilePageState extends State<ProfilePage> {
                         const ClipboardData(text: _referralCode),
                       );
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Referral code copied')),
+                        const SnackBar(
+                          content: Text('Referral code copied'),
+                          duration: Duration(seconds: 2),
+                        ),
                       );
                     },
                   ),
@@ -162,10 +159,9 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
           ),
-
           const SizedBox(height: 32),
 
-          // Section 1 menu
+          // Section 1…
           Text('Section 1', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 12),
           _menuTile(Icons.favorite_border, 'Your Wishlist', () {}),
@@ -173,6 +169,7 @@ class _ProfilePageState extends State<ProfilePage> {
           _menuTile(Icons.book, 'Recipes', () {}),
 
           const SizedBox(height: 32),
+          // Section 2…
           Text('Section 2', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 12),
           _menuTile(Icons.receipt_long, 'GST Details', () {}),
@@ -181,6 +178,7 @@ class _ProfilePageState extends State<ProfilePage> {
           _menuTile(Icons.support_agent, 'Help & Support', () {}),
 
           const SizedBox(height: 32),
+          // Section 3…
           Text('Section 3', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 12),
           _menuTile(Icons.store, 'Sell with Us', () {}),
@@ -192,18 +190,27 @@ class _ProfilePageState extends State<ProfilePage> {
           _menuTile(Icons.volunteer_activism, 'Donate', () {}),
 
           const SizedBox(height: 32),
+          // Section 4…
           Text('Section 4', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 12),
           _menuTile(Icons.notifications, 'Notifications', () {}),
           _menuTile(Icons.share, 'Share the App', () {
             showReferAndEarnMsgDialog(context);
           }),
+          // ← NEW Contact Us tile
+          _menuTile(Icons.contact_mail, 'Contact Us', () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ContactPage()),
+            );
+          }),
 
           const SizedBox(height: 24),
           Center(
             child: SizedBox(
               width: MediaQuery.of(context).size.width * 0.8,
-              child: ElevatedButton(
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.logout),
+                label: const Text('Log Out'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
                   foregroundColor: Colors.white,
@@ -213,19 +220,18 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 ),
                 onPressed: () async {
-                  // 1) Log out to guest mode
-                  await ProfileManager().logOut();
-                  // 2) Go back to home (first route)
+                  await pm.logOut();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Logged out successfully'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
                   Navigator.of(context).popUntil((r) => r.isFirst);
                 },
-                child: const Text(
-                  'Log Out',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
               ),
             ),
           ),
-
           const SizedBox(height: 50),
         ],
       ),

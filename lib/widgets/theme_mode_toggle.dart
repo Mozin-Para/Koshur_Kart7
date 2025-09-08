@@ -1,92 +1,94 @@
+// lib/widgets/theme_mode_toggle.dart
+
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import '../managers/theme_manager.dart';
 import '../managers/color_manager.dart';
 import '../pages/profile/theme_color_settings_page.dart';
 
-/// A pill‐shaped Light/Dark toggle that opens your
-/// Theme & Color Settings page when tapped.
-/// It rebuilds automatically whenever the ThemeManager changes.
+/// A pill-shaped Light/Dark toggle for your AppBar.
+/// Constrained to fit within kToolbarHeight to prevent overflow.
 class ThemeModeToggle extends StatelessWidget {
-  final ThemeManager themeManager;
-  final ColorManager colorManager;
   final double width;
   final double height;
 
   const ThemeModeToggle({
-    super.key,
-    required this.themeManager,
-    required this.colorManager,
+    Key? key,
     this.width = 100,
     this.height = 36,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // AnimatedBuilder listens to themeManager.notifyListeners()
+    final themeManager = context.watch<ThemeManager>();
+    final colorManager = context.watch<ColorManager>();
+
     return AnimatedBuilder(
       animation: themeManager,
       builder: (ctx, _) {
-        // Decide light vs dark
-        final ThemeMode mode = themeManager.themeMode;
-        final bool isDark = mode == ThemeMode.dark ||
+        final mode = themeManager.themeMode;
+        final platformBrightness = MediaQuery.of(ctx).platformBrightness;
+        final isDark = mode == ThemeMode.dark ||
             (mode == ThemeMode.system &&
-                MediaQuery.of(ctx).platformBrightness == Brightness.dark);
+                platformBrightness == Brightness.dark);
 
-        // Colors & positions
-        final Color bgColor = isDark ? Colors.black : Colors.white;
-        final Color thumbColor = isDark ? Colors.white : Colors.black;
-        final Alignment align =
+        final bgColor    = isDark ? Colors.black : Colors.white;
+        final thumbColor = isDark ? Colors.white : Colors.black;
+        final alignment  =
         isDark ? Alignment.centerRight : Alignment.centerLeft;
-        final String label = isDark ? 'DARK MODE' : 'LIGHT MODE';
-        final Color labelColor = thumbColor;
+        final label      = isDark ? 'DARK MODE' : 'LIGHT MODE';
 
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(label,
+        return SizedBox(
+          height: kToolbarHeight,           // lock widget height
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center, // center contents
+            children: [
+              Text(
+                label,
                 style: TextStyle(
                   fontSize: 12,
+                  height: 1.0,                   // tighten line-height
                   fontWeight: FontWeight.bold,
-                  color: labelColor,
-                )),
-            const SizedBox(height: 1),
-            GestureDetector(
-              onTap: () {
-                // Open your Theme & Color Settings page
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => ThemeColorSettingsPage(
-                      themeManager: themeManager,
-                      colorManager: colorManager,
-                    ),
-                  ),
-                );
-              },
-              child: Container(
-                width: width,
-                height: height,
-                decoration: BoxDecoration(
-                  color: bgColor,
-                  borderRadius: BorderRadius.circular(height / 2),
-                  border: Border.all(color: thumbColor, width: 1.2),
+                  color: thumbColor,
                 ),
-                child: AnimatedAlign(
-                  alignment: align,
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeInOut,
-                  child: Container(
-                    width: height - 4,
-                    height: height - 4,
-                    margin: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: thumbColor,
-                      shape: BoxShape.circle,
+              ),
+              const SizedBox(height: 4),
+              GestureDetector(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const ThemeColorSettingsPage(),
+                    ),
+                  );
+                },
+                child: Container(
+                  width: width,
+                  height: height,
+                  decoration: BoxDecoration(
+                    color: bgColor,
+                    borderRadius: BorderRadius.circular(height / 2),
+                    border: Border.all(color: thumbColor, width: 1.2),
+                  ),
+                  child: AnimatedAlign(
+                    alignment: alignment,
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeInOut,
+                    child: Container(
+                      width: height - 4,
+                      height: height - 4,
+                      margin: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: thumbColor,
+                        shape: BoxShape.circle,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );

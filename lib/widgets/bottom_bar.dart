@@ -1,7 +1,10 @@
 // lib/widgets/bottom_bar.dart
+
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../managers/color_manager.dart';  // Provides current accent color/gradient
+
+import '../managers/color_manager.dart';
 
 /// A single icon+label item in the bar.
 class BottomBarItem extends StatelessWidget {
@@ -13,18 +16,17 @@ class BottomBarItem extends StatelessWidget {
   final Color labelColor;
 
   const BottomBarItem({
-    super.key,
+    Key? key,
     required this.icon,
     required this.label,
     required this.onTap,
     this.backgroundColor = Colors.transparent,
     this.iconColor       = Colors.white,
     this.labelColor      = Colors.white,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // Expanded so each item takes equal width.
     return Expanded(
       child: InkWell(
         onTap: onTap,
@@ -57,23 +59,20 @@ class BottomBarItem extends StatelessWidget {
 class FloatingBottomBar extends StatelessWidget {
   final bool isVisible;
   final ValueChanged<int> onItemSelected;
-  final ColorManager colorManager;
 
   const FloatingBottomBar({
-    super.key,
+    Key? key,
     required this.isVisible,
     required this.onItemSelected,
-    required this.colorManager,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // 1) When the nav bar is shown, MediaQuery.viewPadding.bottom
-    //    equals its height. When hidden (gesture mode), it's zero.
-    final double navBarHeight = MediaQuery.of(context).viewPadding.bottom;
+    // Fetch accent color from Provider
+    final accent = context.watch<ColorManager>().currentMaterialColor.shade500;
 
-    // 2) Always pad above that height so the bar floats atop the nav bar.
-    final double bottomPadding = navBarHeight;
+    // Height of the system nav bar (for gesture navigation)
+    final navBarHeight = MediaQuery.of(context).viewPadding.bottom;
 
     return AnimatedSlide(
       offset: isVisible ? Offset.zero : const Offset(0, 1),
@@ -83,67 +82,57 @@ class FloatingBottomBar extends StatelessWidget {
         opacity: isVisible ? 1 : 0,
         duration: const Duration(milliseconds: 600),
         child: Padding(
-          padding: EdgeInsets.only(bottom: bottomPadding),
+          padding: EdgeInsets.only(bottom: navBarHeight),
           child: SafeArea(
             top: false,
-            bottom: false, // manual padding covers bottom inset
-            child: AnimatedBuilder(
-              animation: colorManager,
-              builder: (context, _) {
-                // 3) Semi-transparent accent background
-                final bgColor = colorManager.currentMaterialColor
-                    .shade500
-                    .withOpacity(1);
-
-                return Material(
-                  color: bgColor,
-                  elevation: 8,
-                  borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Row(
-                      children: List.generate(6, (i) {
-                        const icons = [
-                          Icons.store,
-                          Icons.category,
-                          Icons.copy,
-                          Icons.support_agent,
-                          Icons.shopping_cart,
-                          Icons.other_houses,
-                        ];
-                        const labels = [
-                          'Home',
-                          'Categories',
-                          'Photostat',
-                          'Support',
-                          'Cart',
-                          'Room Rent',
-                        ];
-                        final isExternal = i == 5;
-                        return BottomBarItem(
-                          icon: icons[i],
-                          label: labels[i],
-                          onTap: () async {
-                            onItemSelected(i);
-                            if (isExternal) {
-                              final url = Uri.parse('https://chinarhomes.com/');
-                              await launchUrl(
-                                url,
-                                mode: LaunchMode.externalApplication,
-                              );
-                            }
-                          },
-                          backgroundColor: isExternal
-                              ? Colors.red.shade700.withOpacity(0.9)
-                              : Colors.transparent,
-                          iconColor: isExternal ? Colors.white : Colors.black,
-                          labelColor: isExternal ? Colors.white : Colors.black,
-                        );
-                      }),
-                    ),
-                  ),
-                );
-              },
+            bottom: false,
+            child: Material(
+              color: accent.withOpacity(1),
+              elevation: 8,
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: List.generate(6, (i) {
+                    const icons = [
+                      Icons.store,
+                      Icons.category,
+                      Icons.copy,
+                      Icons.support_agent,
+                      Icons.shopping_cart,
+                      Icons.other_houses,
+                    ];
+                    const labels = [
+                      'Home',
+                      'Categories',
+                      'Photostat',
+                      'Support',
+                      'Cart',
+                      'Room Rent',
+                    ];
+                    final isExternal = i == 5;
+                    return BottomBarItem(
+                      icon: icons[i],
+                      label: labels[i],
+                      onTap: () async {
+                        onItemSelected(i);
+                        if (isExternal) {
+                          final url = Uri.parse('https://chinarhomes.com/');
+                          await launchUrl(
+                            url,
+                            mode: LaunchMode.externalApplication,
+                          );
+                        }
+                      },
+                      backgroundColor: isExternal
+                          ? Colors.red.shade700.withOpacity(0.9)
+                          : Colors.transparent,
+                      iconColor: isExternal ? Colors.white : Colors.black,
+                      labelColor: isExternal ? Colors.white : Colors.black,
+                    );
+                  }),
+                ),
+              ),
             ),
           ),
         ),
