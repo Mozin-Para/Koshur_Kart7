@@ -15,7 +15,7 @@ import '../widgets/title_bar.dart';
 import 'permission_request_page.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
   _HomePageState createState() => _HomePageState();

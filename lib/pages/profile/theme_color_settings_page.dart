@@ -8,7 +8,7 @@ import '../../managers/theme_manager.dart';
 import '../../managers/color_manager.dart';
 
 class ThemeColorSettingsPage extends StatelessWidget {
-  const ThemeColorSettingsPage({Key? key}) : super(key: key);
+  const ThemeColorSettingsPage({super.key});
 
   @override
   Widget build(BuildContext context) {

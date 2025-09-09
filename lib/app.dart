@@ -9,7 +9,7 @@ import 'managers/profile_manager.dart';
 import 'pages/intro_splash.dart';
 
 class App extends StatelessWidget {
-  const App({Key? key}) : super(key: key);
+  const App({super.key});
 
   @override
   Widget build(BuildContext context) {

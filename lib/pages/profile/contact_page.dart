@@ -7,7 +7,7 @@ import '../../managers/theme_manager.dart';
 import '../../managers/color_manager.dart';
 
 class ContactPage extends StatelessWidget {
-  const ContactPage({Key? key}) : super(key: key);
+  const ContactPage({super.key});
 
   @override
   Widget build(BuildContext context) {

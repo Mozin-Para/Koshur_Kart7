@@ -16,14 +16,14 @@ class BottomBarItem extends StatelessWidget {
   final Color labelColor;
 
   const BottomBarItem({
-    Key? key,
+    super.key,
     required this.icon,
     required this.label,
     required this.onTap,
     this.backgroundColor = Colors.transparent,
     this.iconColor       = Colors.white,
     this.labelColor      = Colors.white,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -61,10 +61,10 @@ class FloatingBottomBar extends StatelessWidget {
   final ValueChanged<int> onItemSelected;
 
   const FloatingBottomBar({
-    Key? key,
+    super.key,
     required this.isVisible,
     required this.onItemSelected,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
