@@ -1,107 +1,102 @@
-//lib/managers/color_manager.dart
+// lib/managers/color_manager.dart
+
 import 'package:flutter/material.dart';
 import '../services/prefs_service.dart';
+
+/// Provide an explicit 32-bit ARGB integer from any Color.
+extension ColorToArgb on Color {
+  int toArgb32() => (alpha << 24) | (red << 16) | (green << 8) | blue;
+}
 
 class ColorManager extends ChangeNotifier {
   final PrefsService _prefs = PrefsService();
 
-  // 1) Fixed palette of MaterialColor swatches.
+  // 1) Your fixed, built-in MaterialColor swatches.
   final List<MaterialColor> colors = [
-    Colors.green,  // index 0 (default)
-    Colors.grey,   // index 1
-    Colors.blue,   // index 2
-    Colors.red,    // index 3
-    Colors.yellow, // index 4
-    Colors.purple, // index 5
-    Colors.teal,   // index 6
+    Colors.green,
+    Colors.grey,
+    Colors.blue,
+    Colors.red,
+    Colors.yellow,
+    Colors.purple,
+    Colors.teal,
   ];
 
-  // 2) Backing field for the active swatch (updates via setColorByIndex or setCustomColor).
-  late MaterialColor _currentColor = colors[0];
+  // 2) The active swatch.
+  late MaterialColor _currentColor = colors.first;
 
-  // 3) Holds the user’s chosen preset index, or null if using a custom color.
+  // 3) If preset is chosen, its index; otherwise null.
   int? _savedIndex;
 
-  // 4) Holds the raw ARGB value of a custom color if the user picked one.
-  int? _customColorValue;
+  // 4) If custom, the raw ARGB stored here.
+  int? _customArgb;
 
-  /// Public getter for the active swatch.
   MaterialColor get currentMaterialColor => _currentColor;
+  bool get isPresetColorSet  => _savedIndex != null;
+  bool get isCustomColorSet  => _customArgb  != null;
 
-  /// True if the user selected one of the preset swatches.
-  bool get isPresetColorSet => _savedIndex != null;
-
-  /// True if the user picked a completely custom color.
-  bool get isCustomColorSet => _customColorValue != null;
-
-  /// Loads both a saved preset‐index *and* a saved custom‐color value.
-  /// Priority: if preset index found, use it; otherwise if custom exists, use that.
+  /// Load saved settings, build swatch accordingly.
   Future<void> load() async {
-    final int? idx        = await _prefs.loadColorIndex();
-    final int? customArgb = await _prefs.loadCustomColorValue();
+    final idx        = await _prefs.loadColorIndex();
+    final customArgb = await _prefs.loadCustomColorValue();
 
     if (idx != null && idx >= 0 && idx < colors.length) {
-      // 5a) Found a valid preset index → use that swatch
-      _savedIndex = idx;
-      _customColorValue = null;
+      _savedIndex  = idx;
+      _customArgb  = null;
       _currentColor = colors[idx];
     }
     else if (customArgb != null) {
-      // 5b) No preset, but found a custom‐ARGB value → build swatch from that
-      _savedIndex = null;
-      _customColorValue = customArgb;
+      _savedIndex  = null;
+      _customArgb  = customArgb;
       _buildCustomSwatch(Color(customArgb));
     }
-    // else: first‐launch default (colors[0])
 
     notifyListeners();
   }
 
-  /// Switches to one of the fixed‐palette swatches by index.
-  /// Persists the index and clears any custom‐color setting.
+  /// Pick one of the built-in swatches.
   void setColorByIndex(int index) {
     if (index < 0 || index >= colors.length) return;
 
-    _savedIndex      = index;
-    _customColorValue = null;
-    _currentColor    = colors[index];
-    notifyListeners();
+    _savedIndex   = index;
+    _customArgb   = null;
+    _currentColor = colors[index];
     _prefs.saveColorIndex(index);
+    notifyListeners();
   }
 
-  /// Builds a one-off MaterialColor from any [color], persists it,
-  /// and clears any preset‐index setting.
+  /// Create + persist a one-off Color swatch.
   void setCustomColor(Color color) {
-    _savedIndex      = null;
-    _customColorValue = color.value;
+    _savedIndex  = null;
+    _customArgb  = color.toArgb32();
+    _prefs.saveCustomColorValue(_customArgb!);
     _buildCustomSwatch(color);
     notifyListeners();
-    _prefs.saveCustomColorValue(color.value);
   }
 
-  /// Internal helper to build the opacity‐ramp swatch for a custom Color.
-  void _buildCustomSwatch(Color color) {
-    _currentColor = MaterialColor(
-      color.value,
-      <int, Color>{
-        50:  color.withOpacity(0.1),
-        100: color.withOpacity(0.2),
-        200: color.withOpacity(0.3),
-        300: color.withOpacity(0.4),
-        400: color.withOpacity(0.5),
-        500: color,
-        600: color.withOpacity(0.7),
-        700: color.withOpacity(0.8),
-        800: color.withOpacity(0.9),
-        900: color.withOpacity(1.0),
-      },
-    );
+  /// Build a 10-shade MaterialColor using only withAlpha().
+  void _buildCustomSwatch(Color baseColor) {
+    const int maxA = 0xFF;
+    final int argb = baseColor.toArgb32();
+
+    _currentColor = MaterialColor(argb, <int, Color>{
+      50:  baseColor.withAlpha((0.1 * maxA).round()),
+      100: baseColor.withAlpha((0.2 * maxA).round()),
+      200: baseColor.withAlpha((0.3 * maxA).round()),
+      300: baseColor.withAlpha((0.4 * maxA).round()),
+      400: baseColor.withAlpha((0.5 * maxA).round()),
+      500: baseColor.withAlpha(maxA),              // 100% alpha
+      600: baseColor.withAlpha((0.7 * maxA).round()),
+      700: baseColor.withAlpha((0.8 * maxA).round()),
+      800: baseColor.withAlpha((0.9 * maxA).round()),
+      900: baseColor.withAlpha(maxA),              // 100% alpha
+    });
   }
 
-  /// Returns a vertical gradient based on the active swatch.
+  /// A simple two-shade vertical gradient.
   LinearGradient currentGradient() => LinearGradient(
     colors: [_currentColor.shade400, _currentColor.shade700],
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
+    begin : Alignment.topCenter,
+    end   : Alignment.bottomCenter,
   );
 }

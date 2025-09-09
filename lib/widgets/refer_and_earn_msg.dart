@@ -33,6 +33,8 @@ Future<void> showReferAndEarnMsgDialog(BuildContext context) {
 }
 
 class _ReferAndEarnDialogContent extends StatelessWidget {
+  const _ReferAndEarnDialogContent({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     final theme     = Theme.of(context);
@@ -70,8 +72,8 @@ class _ReferAndEarnDialogContent extends StatelessWidget {
                 // Title
                 Text(
                   'Share & Earn!',
-                  style: theme.textTheme.titleLarge
-                      ?.copyWith(color: onSurface),
+                  style:
+                  theme.textTheme.titleLarge?.copyWith(color: onSurface),
                 ),
 
                 const SizedBox(height: 8),
@@ -80,8 +82,8 @@ class _ReferAndEarnDialogContent extends StatelessWidget {
                 Text(
                   'Share this app & earn 99 coins after user apply your redam code in app.',
                   textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyMedium
-                      ?.copyWith(color: onSurface),
+                  style:
+                  theme.textTheme.bodyMedium?.copyWith(color: onSurface),
                 ),
 
                 const SizedBox(height: 24),
@@ -93,14 +95,18 @@ class _ReferAndEarnDialogContent extends StatelessWidget {
                     icon: const Icon(Icons.share),
                     label: const Text('Share Now'),
                     onPressed: () async {
+                      // Capture the messenger **before** any awaits
+                      final messenger = ScaffoldMessenger.of(context);
                       final uri = Uri.parse('https://chinarhomes.com/');
-                      if (await canLaunchUrl(uri)) {
+
+                      final canLaunch = await canLaunchUrl(uri);
+                      if (canLaunch) {
                         await launchUrl(
                           uri,
                           mode: LaunchMode.externalApplication,
                         );
                       } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        messenger.showSnackBar(
                           const SnackBar(
                             content: Text('Could not launch link'),
                           ),

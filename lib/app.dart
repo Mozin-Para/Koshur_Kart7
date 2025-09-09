@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 
 import 'managers/theme_manager.dart';
 import 'managers/color_manager.dart';
-import 'managers/profile_manager.dart';
 import 'pages/intro_splash.dart';
 
 class App extends StatelessWidget {
@@ -15,7 +14,7 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeMgr = context.watch<ThemeManager>();
     final colorMgr = context.watch<ColorManager>();
-    final isLoggedIn = context.watch<ProfileManager>().isLoggedIn;
+    // Removed the unused isLoggedIn variable
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,

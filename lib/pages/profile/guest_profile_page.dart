@@ -1,7 +1,6 @@
 // lib/pages/profile/guest_profile_page.dart
 
 import 'package:flutter/material.dart';
-import '../../managers/profile_manager.dart';
 import 'login_page.dart';  // <-- correct relative import
 
 /// Simple profile screen for guests:
@@ -12,7 +11,6 @@ class GuestProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pm    = ProfileManager();
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -44,9 +42,7 @@ class GuestProfilePage extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const LoginPage(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const LoginPage()),
                   );
                 },
                 child: const Text('Log In'),

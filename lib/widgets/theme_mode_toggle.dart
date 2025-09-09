@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../managers/theme_manager.dart';
-import '../managers/color_manager.dart';
 import '../pages/profile/theme_color_settings_page.dart';
 
 /// A pill-shaped Light/Dark toggle for your AppBar.
@@ -14,15 +13,14 @@ class ThemeModeToggle extends StatelessWidget {
   final double height;
 
   const ThemeModeToggle({
-    Key? key,
+    super.key,
     this.width = 100,
     this.height = 36,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     final themeManager = context.watch<ThemeManager>();
-    final colorManager = context.watch<ColorManager>();
 
     return AnimatedBuilder(
       animation: themeManager,
@@ -33,14 +31,14 @@ class ThemeModeToggle extends StatelessWidget {
             (mode == ThemeMode.system &&
                 platformBrightness == Brightness.dark);
 
-        final bgColor    = isDark ? Colors.black : Colors.white;
+        final bgColor = isDark ? Colors.black : Colors.white;
         final thumbColor = isDark ? Colors.white : Colors.black;
-        final alignment  =
+        final alignment =
         isDark ? Alignment.centerRight : Alignment.centerLeft;
-        final label      = isDark ? 'DARK MODE' : 'LIGHT MODE';
+        final label = isDark ? 'DARK MODE' : 'LIGHT MODE';
 
         return SizedBox(
-          height: kToolbarHeight,           // lock widget height
+          height: kToolbarHeight, // lock widget height
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center, // center contents
@@ -49,7 +47,7 @@ class ThemeModeToggle extends StatelessWidget {
                 label,
                 style: TextStyle(
                   fontSize: 12,
-                  height: 1.0,                   // tighten line-height
+                  height: 1.0, // tighten line-height
                   fontWeight: FontWeight.bold,
                   color: thumbColor,
                 ),

@@ -87,7 +87,8 @@ class FloatingBottomBar extends StatelessWidget {
             top: false,
             bottom: false,
             child: Material(
-              color: accent.withOpacity(1),
+              // Full opacity: no withOpacity needed
+              color: accent,
               elevation: 8,
               borderRadius: BorderRadius.circular(12),
               child: Padding(
@@ -111,6 +112,7 @@ class FloatingBottomBar extends StatelessWidget {
                       'Room Rent',
                     ];
                     final isExternal = i == 5;
+
                     return BottomBarItem(
                       icon: icons[i],
                       label: labels[i],
@@ -125,10 +127,11 @@ class FloatingBottomBar extends StatelessWidget {
                         }
                       },
                       backgroundColor: isExternal
-                          ? Colors.red.shade700.withOpacity(0.9)
+                      // 90% opacity via withAlpha
+                          ? Colors.red.shade700.withAlpha((0.9 * 255).round())
                           : Colors.transparent,
-                      iconColor: isExternal ? Colors.white : Colors.black,
-                      labelColor: isExternal ? Colors.white : Colors.black,
+                      iconColor:   isExternal ? Colors.white : Colors.black,
+                      labelColor:  isExternal ? Colors.white : Colors.black,
                     );
                   }),
                 ),

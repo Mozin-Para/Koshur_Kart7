@@ -45,7 +45,12 @@ class ThemeColorSettingsPage extends StatelessWidget {
                 title: const Text('Accent Color'),
                 subtitle: const Text('Choose your app color'),
                 trailing: Icon(Icons.arrow_drop_down, color: accentShade),
-                onTap: () => _showAccentMenu(tileCtx, colorManager),
+                // Pass both contexts: root + tile
+                onTap: () => _showAccentMenu(
+                  context,
+                  tileCtx,
+                  colorManager,
+                ),
               );
             }),
           ],
@@ -59,7 +64,10 @@ class ThemeColorSettingsPage extends StatelessWidget {
     final box = tileCtx.findRenderObject() as RenderBox;
     final pos = box.localToGlobal(Offset.zero);
     final rect = RelativeRect.fromLTRB(
-      pos.dx, pos.dy + box.size.height, pos.dx + box.size.width, 0,
+      pos.dx,
+      pos.dy + box.size.height,
+      pos.dx + box.size.width,
+      0,
     );
 
     final selected = await showMenu<ThemeMode>(
@@ -84,13 +92,20 @@ class ThemeColorSettingsPage extends StatelessWidget {
   }
 
   Future<void> _showAccentMenu(
-      BuildContext tileCtx, ColorManager colorManager) async {
+      BuildContext rootCtx,
+      BuildContext tileCtx,
+      ColorManager colorManager,
+      ) async {
     final box = tileCtx.findRenderObject() as RenderBox;
     final pos = box.localToGlobal(Offset.zero);
     final rect = RelativeRect.fromLTRB(
-      pos.dx, pos.dy + box.size.height, pos.dx + box.size.width, 0,
+      pos.dx,
+      pos.dy + box.size.height,
+      pos.dx + box.size.width,
+      0,
     );
 
+    // Build menu items
     final items = <PopupMenuEntry<int>>[
       for (var i = 0; i < colorManager.colors.length; i++)
         PopupMenuItem<int>(
@@ -117,27 +132,25 @@ class ThemeColorSettingsPage extends StatelessWidget {
           ),
         ),
       const PopupMenuDivider(),
-      PopupMenuItem<int>(
+      const PopupMenuItem<int>(
         value: -1,
-        child: Text(
-          'Custom Color…',
-          style: TextStyle(
-            color: Theme.of(tileCtx).colorScheme.onSurface,
-          ),
-        ),
+        child: Text('Custom Color…'),
       ),
     ];
 
+    // Wait for user to pick an index
     final selected = await showMenu<int>(
       context: tileCtx,
       position: rect,
       items: items,
     );
     if (selected == null) return;
+
     if (selected >= 0) {
       colorManager.setColorByIndex(selected);
     } else {
-      await _openCustomColorPicker(tileCtx, colorManager);
+      // Use the root context here
+      await _openCustomColorPicker(rootCtx, colorManager);
     }
   }
 
@@ -154,7 +167,8 @@ class ThemeColorSettingsPage extends StatelessWidget {
             child: ColorPicker(
               pickerColor: pickerColor,
               onColorChanged: (c) => pickerColor = c,
-              showLabel: true,
+              // showLabel is deprecated → replace with labelTypes
+              labelTypes: const [],
               pickerAreaHeightPercent: 0.7,
             ),
           ),

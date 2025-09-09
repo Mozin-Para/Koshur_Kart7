@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../managers/profile_manager.dart';
-import '../managers/theme_manager.dart';
 import '../managers/color_manager.dart';
 import '../pages/map_address/address_page.dart';
 import '../pages/profile/profile_page.dart';
@@ -14,7 +13,7 @@ import '../pages/map_address/address_model.dart';
 
 /// Full‐height header with gradient, title, ETA, address selector, search & chips.
 class FullTitleBar extends StatefulWidget implements PreferredSizeWidget {
-  const FullTitleBar({Key? key}) : super(key: key);
+  const FullTitleBar({super.key});
 
   @override
   Size get preferredSize => const Size.fromHeight(240);
@@ -28,14 +27,13 @@ class _FullTitleBarState extends State<FullTitleBar> {
 
   @override
   Widget build(BuildContext context) {
-    final pm       = context.watch<ProfileManager>();
-    final themeMgr = context.watch<ThemeManager>();
+    final pm = context.watch<ProfileManager>();
     final colorMgr = context.watch<ColorManager>();
-    final accent   = colorMgr.currentMaterialColor.shade500;
-    final theme    = Theme.of(context);
+    final accent = colorMgr.currentMaterialColor.shade500;
+    final theme = Theme.of(context);
     final bottomColor = theme.brightness == Brightness.light
         ? Colors.white
-        : theme.colorScheme.surface;
+        : theme.colorScheme.surfaceContainerHighest;
 
     // Status bar contrast
     final iconBrightness =
@@ -97,7 +95,7 @@ class _FullTitleBarState extends State<FullTitleBar> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.9),
+                            color: Color.fromRGBO(255, 255, 255, 0.9),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Text(
@@ -200,7 +198,7 @@ class _FullTitleBarState extends State<FullTitleBar> {
                 decoration: BoxDecoration(
                   color: theme.brightness == Brightness.light
                       ? Colors.white
-                      : theme.colorScheme.surfaceVariant,
+                      : theme.colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: const TextField(
@@ -234,22 +232,23 @@ class _FullTitleBarState extends State<FullTitleBar> {
 /// Compact header that slides in when scrolling up.
 class MiniTitleBar extends StatelessWidget {
   final bool isVisible;
-  const MiniTitleBar({Key? key, required this.isVisible}) : super(key: key);
+
+  const MiniTitleBar({super.key, required this.isVisible});
 
   static const _searchH = 48.0;
-  static const _chipsH  = 48.0;
-  static const _vPad    = 8.0;
+  static const _chipsH = 48.0;
+  static const _vPad = 8.0;
 
   @override
   Widget build(BuildContext context) {
-    final colorMgr  = context.watch<ColorManager>();
-    final accent    = colorMgr.currentMaterialColor.shade500;
-    final theme     = Theme.of(context);
+    final colorMgr = context.watch<ColorManager>();
+    final accent = colorMgr.currentMaterialColor.shade500;
+    final theme = Theme.of(context);
     final bottomGrad = theme.brightness == Brightness.light
         ? Colors.white
-        : theme.colorScheme.surface;
-    final statusBar  = MediaQuery.of(context).padding.top;
-    final height     = statusBar + _vPad + _searchH + _vPad + _chipsH;
+        : theme.colorScheme.surfaceContainerHighest;
+    final statusBar = MediaQuery.of(context).padding.top;
+    final height = statusBar + _vPad + _searchH + _vPad + _chipsH;
 
     return AnimatedSlide(
       offset: isVisible ? Offset.zero : const Offset(0, -1),
@@ -280,7 +279,7 @@ class MiniTitleBar extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: theme.brightness == Brightness.light
                           ? Colors.white
-                          : theme.colorScheme.surfaceVariant,
+                          : theme.colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(24),
                     ),
                     child: const TextField(
@@ -323,8 +322,8 @@ class MiniTitleBar extends StatelessWidget {
 class _Chip extends StatelessWidget {
   final IconData icon;
   final String label;
-  const _Chip({Key? key, required this.icon, required this.label})
-      : super(key: key);
+
+  const _Chip({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {

@@ -4,13 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../managers/profile_manager.dart';
-import '../../managers/theme_manager.dart';
 import '../../managers/color_manager.dart';
 import '../../widgets/refer_and_earn_msg.dart';
 import '../../widgets/theme_mode_toggle.dart';
 import 'profile_your_account_details.dart';
 import 'edit_profile_page.dart';
-import 'contact_page.dart';  // ← NEW
+import 'contact_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -20,12 +19,12 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  String _name  = 'ADIL MUSHTAQ RATHER';
+  String _name = 'ADIL MUSHTAQ RATHER';
   String _phone = '9622424392';
   String _email = 'xyz@koshurkart.com';
-  String _dob   = '01/01/1990';
+  String _dob = '01/01/1990';
 
-  static const _uniqueId     = 'M701';
+  static const _uniqueId = 'M701';
   static const _referralCode = 'KSK-REF-1234';
 
   Future<void> _editProfile() async {
@@ -33,20 +32,20 @@ class _ProfilePageState extends State<ProfilePage> {
     final result = await Navigator.of(context).push<ProfileUpdate>(
       MaterialPageRoute(
         builder: (_) => EditProfilePage(
-          initialName:  _name,
+          initialName: _name,
           initialPhone: _phone,
           initialEmail: _email,
-          initialDob:   _dob,
+          initialDob: _dob,
         ),
       ),
     );
     if (!mounted || result == null) return;
 
     setState(() {
-      _name  = result.name;
+      _name = result.name;
       _phone = result.phone;
       _email = result.email;
-      _dob   = result.dob;
+      _dob = result.dob;
     });
     messenger.showSnackBar(
       const SnackBar(
@@ -68,14 +67,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    final pm       = context.read<ProfileManager>();
-    final themeMgr = context.watch<ThemeManager>();
+    final pm = context.read<ProfileManager>();
     final colorMgr = context.watch<ColorManager>();
 
-    final accent        = colorMgr.currentMaterialColor.shade500;
+    final accent = colorMgr.currentMaterialColor.shade500;
     final isAccentLight = accent.computeLuminance() > 0.5;
-    final barIcons      = isAccentLight ? Brightness.dark : Brightness.light;
-    final appBarText    = isAccentLight ? Colors.black : Colors.white;
+    final barIcons = isAccentLight ? Brightness.dark : Brightness.light;
+    final appBarText = isAccentLight ? Colors.black : Colors.white;
 
     SystemChrome.setSystemUIOverlayStyle(
       SystemUiOverlayStyle(
@@ -105,12 +103,12 @@ class _ProfilePageState extends State<ProfilePage> {
         padding: const EdgeInsets.all(16),
         children: [
           ProfileYourAccountDetails(
-            name:        _name,
-            phone:       _phone,
-            email:       _email,
-            dob:         _dob,
-            uniqueId:    _uniqueId,
-            onTap:       _editProfile,
+            name: _name,
+            phone: _phone,
+            email: _email,
+            dob: _dob,
+            uniqueId: _uniqueId,
+            onTap: _editProfile,
             onUniqueTap: () {},
           ),
           const SizedBox(height: 16),
@@ -123,7 +121,12 @@ class _ProfilePageState extends State<ProfilePage> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               decoration: BoxDecoration(
-                color: accent.withOpacity(0.1),
+                color: Color.fromRGBO(
+                  accent.red,
+                  accent.green,
+                  accent.blue,
+                  0.1,
+                ),
                 border: Border.all(color: accent),
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -221,13 +224,15 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 onPressed: () async {
                   await pm.logOut();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Logged out successfully'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                  Navigator.of(context).popUntil((r) => r.isFirst);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Logged out successfully'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                    Navigator.of(context).popUntil((r) => r.isFirst);
+                  }
                 },
               ),
             ),

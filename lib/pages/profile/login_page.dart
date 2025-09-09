@@ -1,9 +1,13 @@
+// lib/pages/profile/login_page.dart
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../managers/profile_manager.dart';
+import '../../widgets/theme_mode_toggle.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({Key? key}) : super(key: key);
+  const LoginPage({super.key});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -14,7 +18,7 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   bool _loading = false;
 
-  // Initialize GoogleSignIn with scopes
+  // GoogleSignIn setup
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile', 'openid'],
   );
@@ -31,25 +35,33 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       final phone = _phoneCtrl.text.trim();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Sending OTP to +91 $phone')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Sending OTP to +91 $phone')),
+        );
+      }
       await Future.delayed(const Duration(seconds: 1));
 
       await ProfileManager().logIn();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Logged in successfully'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-      Navigator.of(context).popUntil((r) => r.isFirst);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Logged in successfully'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        Navigator.of(context).popUntil((r) => r.isFirst);
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
     } finally {
-      setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
 
@@ -58,18 +70,24 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       final account = await _googleSignIn.signIn();
-      if (account == null) return; // user canceled
+      if (account == null) return;
       await ProfileManager().logIn();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Welcome, ${account.displayName}!')),
-      );
-      Navigator.of(context).popUntil((r) => r.isFirst);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Welcome, ${account.displayName}!')),
+        );
+        Navigator.of(context).popUntil((r) => r.isFirst);
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Google sign-in failed: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Google sign-in failed: $e')),
+        );
+      }
     } finally {
-      setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
 
@@ -77,10 +95,23 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     final accent = Theme.of(context).primaryColor;
 
+    // Optionally reconfigure status bar to match accent
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: accent,
+      statusBarIconBrightness:
+      accent.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+    ));
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Log In or Sign Up'),
         backgroundColor: accent,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: ThemeModeToggle(width: 52, height: 26),
+          ),
+        ],
       ),
       body: Stack(
         children: [
@@ -103,7 +134,7 @@ class _LoginPageState extends State<LoginPage> {
 
                 const SizedBox(height: 24),
 
-                // 3) Phone input (pill-shaped)
+                // 3) Phone input
                 Form(
                   key: _formKey,
                   child: TextFormField(
@@ -127,14 +158,15 @@ class _LoginPageState extends State<LoginPage> {
                         borderSide: BorderSide(color: accent),
                       ),
                     ),
-                    validator: (v) =>
-                    (v?.trim().length == 10) ? null : 'Enter a valid number',
+                    validator: (v) => (v?.trim().length == 10)
+                        ? null
+                        : 'Enter a valid number',
                   ),
                 ),
 
                 const SizedBox(height: 16),
 
-                // 4) Continue button (pill-shaped, red)
+                // 4) Continue button
                 SizedBox(
                   width: double.infinity,
                   height: 48,
@@ -166,7 +198,7 @@ class _LoginPageState extends State<LoginPage> {
 
                 const SizedBox(height: 24),
 
-                // 6) Google Sign-In button
+                // 6) Google Sign-In
                 SizedBox(
                   width: double.infinity,
                   height: 48,
