@@ -1,19 +1,10 @@
 // lib/pages/permission_request_page.dart
-// First-launch screen that:
-//  • Lists all required permissions with their current OS status
-//  • Lets the user tap “Grant” to invoke the native Allow/Deny popup
-//  • Tracks which permissions are granted/denied
-//  • Includes a Continue button that always returns to HomePage
-//    while clearing the firstLaunch flag so this screen shows only once
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import 'dart:io';                              // To detect the current platform (Android vs iOS)
-import 'package:flutter/material.dart';        // Core Flutter UI widgets
-import 'package:permission_handler/permission_handler.dart'; // OS-level permission APIs
-import 'package:shared_preferences/shared_preferences.dart'; // Persisting simple key/value pairs
-
-/// A stateful page that drives the OS permission dialogs one by one.
 class PermissionRequestPage extends StatefulWidget {
-  /// Default constructor forwards the optional Key to super.
   const PermissionRequestPage({super.key});
 
   @override
@@ -21,105 +12,124 @@ class PermissionRequestPage extends StatefulWidget {
 }
 
 class _PermissionRequestPageState extends State<PermissionRequestPage> {
-  /// 1) Maps each Permission enum to a human-readable label.
-  ///    On Android, we include POST_NOTIFICATIONS only if the platform is Android.
-  final Map<Permission, String> _permNames = {
-    Permission.location:      'Location',
+  /// All permissions we ask on very first run.
+  final Map<Permission, String> _allPermNames = {
+    Permission.location:        'Location',
     if (Platform.isAndroid) Permission.notification: 'Notifications',
-    Permission.camera:        'Camera',
-    Permission.microphone:    'Microphone',
-    Permission.contacts:      'Contacts',
+    Permission.camera:          'Camera',
+    Permission.microphone:      'Microphone',
+    Permission.contacts:        'Contacts',
   };
 
-  /// 2) Holds the latest PermissionStatus for each permission in `_permNames`.
-  ///    Initialized empty; filled by `_loadStatuses()` on init.
+  /// Only these two on every subsequent open.
+  final Map<Permission, String> _essentialPermNames = {
+    Permission.location:        'Location',
+    if (Platform.isAndroid) Permission.notification: 'Notifications',
+  };
+
+  bool _isFirstLaunch = true;
   Map<Permission, PermissionStatus> _statuses = {};
 
   @override
   void initState() {
     super.initState();
-    // 3) When this widget first appears, load each permission’s current status.
-    _loadStatuses();
+    _initialize();
   }
 
-  /// 4) Asynchronously queries the OS for the current status of each permission.
-  ///    Populates `_statuses` and triggers a rebuild.
-  Future<void> _loadStatuses() async {
-    final Map<Permission, PermissionStatus> result = {};
-    // 4a) Loop through every permission key
-    for (final perm in _permNames.keys) {
-      // 4b) Ask the plugin for the current status (granted, denied, etc.)
+  Future<void> _initialize() async {
+    // 1) Read first‐launch flag
+    final prefs = await SharedPreferences.getInstance();
+    final first = prefs.getBool('firstLaunch') ?? true;
+
+    // 2) Load current status for all perms
+    final result = <Permission, PermissionStatus>{};
+    for (final perm in _allPermNames.keys) {
       result[perm] = await perm.status;
     }
-    // 4c) Update state so UI shows the latest statuses under each ListTile
-    setState(() => _statuses = result);
+
+    // 3) Update state
+    setState(() {
+      _isFirstLaunch = first;
+      _statuses      = result;
+    });
+
+    // 4) After build, request OS dialogs
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final toRequest = _isFirstLaunch
+          ? _allPermNames.keys
+          : _essentialPermNames.keys.where((p) =>
+      _statuses[p] != PermissionStatus.granted
+      );
+      for (final perm in toRequest) {
+        await _requestPermission(perm);
+      }
+    });
   }
 
-  /// 5) Invoked when the user taps “Grant” for a specific permission.
-  ///    Requests the OS dialog and then reloads that permission’s status.
-  Future<void> _request(Permission perm) async {
-    // 5a) Fire the native popup (Allow / Deny)
+  Future<void> _requestPermission(Permission perm) async {
     final status = await perm.request();
-    // 5b) Store the new status locally so the subtitle updates
     setState(() => _statuses[perm] = status);
   }
 
-  /// 6) Called when the user taps “Continue to App” at the bottom.
-  ///    Marks firstLaunch=false so this screen never reappears,
-  ///    then pops back to the HomePage.
   Future<void> _finish() async {
-    // 6a) Obtain the SharedPreferences instance
     final prefs = await SharedPreferences.getInstance();
-    // 6b) Persist that we've completed the first-run permission setup
     await prefs.setBool('firstLaunch', false);
-    // 6c) Navigate back (pop) to HomePage
     if (!mounted) return;
     Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
+    // Choose which map to render
+    final permNames = _isFirstLaunch
+        ? _allPermNames
+        : _essentialPermNames;
+
     return Scaffold(
-      // 7) Standard AppBar with a title
       appBar: AppBar(title: const Text('Permissions Setup')),
-      // 8) ListView with padding: intro text, permission tiles, Continue button
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // 9) Introductory description
-          const Text(
-            'To get the best experience, please grant these permissions. '
-                'You can skip any—you’ll still enter the app.',
-            style: TextStyle(fontSize: 16),
+          Text(
+            _isFirstLaunch
+                ? 'Please grant all permissions for the best app experience.'
+                : 'Checking Location & Notifications each time; others skipped.',
+            style: const TextStyle(fontSize: 16),
           ),
           const SizedBox(height: 20),
 
-          // 10) Build a Card + ListTile for each permission in our map
-          for (final entry in _permNames.entries)
+          // Permission tiles
+          for (final entry in permNames.entries)
             Card(
+              margin: const EdgeInsets.symmetric(vertical: 6),
               child: ListTile(
-                // 10a) Display the permission label (e.g., “Camera”)
                 title: Text(entry.value),
-                // 10b) Show the current status (granted, denied, etc.)
                 subtitle: Text(
                   _statuses[entry.key]
                       ?.toString()
                       .split('.')
-                      .last           // Converts PermissionStatus.granted → "granted"
-                      ?? 'Unknown',      // Fallback if status isn’t loaded yet
+                      .last
+                      .toUpperCase() ??
+                      'UNKNOWN',
                 ),
-                // 10c) “Grant” button to trigger the OS popup for this permission
                 trailing: ElevatedButton(
-                  onPressed: () => _request(entry.key),
-                  child: const Text('Grant'),
+                  style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,       // red background
+                  foregroundColor: Colors.white,     // white text/icon
+                ),
+                  onPressed: () => _requestPermission(entry.key),
+                  child: const Text('Allow'),
                 ),
               ),
             ),
 
           const SizedBox(height: 30),
 
-          // 11) A Continue button that always returns to HomePage
-          ElevatedButton(
+          // Continue button
+          ElevatedButton(style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.red,       // red background
+            foregroundColor: Colors.white,     // white text/icon
+          ),
             onPressed: _finish,
             child: const Text('Continue to App'),
           ),
